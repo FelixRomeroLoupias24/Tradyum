@@ -246,6 +246,7 @@ tbody tr:last-child td{border-bottom:none;}
 }
 .tag-long{background:var(--green-dim);color:var(--green);}
 .tag-short{background:var(--red-dim);color:var(--red);}
+.trade-thumb{width:40px;height:40px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--border);}
 .empty-state{text-align:center;padding:50px 20px;color:var(--muted);}
 .empty-state svg{width:44px;height:44px;opacity:.35;margin-bottom:12px;}
 
@@ -360,7 +361,7 @@ tbody tr:last-child td{border-bottom:none;}
   .grid-5,.grid-4,.grid-3,.grid-2{grid-template-columns:1fr;}
   .form-row{grid-template-columns:1fr;}
   .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-  .table-scroll table{min-width:640px;}
+  .table-scroll table{min-width:520px;}
   .cal-day{min-height:56px;padding:6px;}
   .modal{padding:18px;}
 }
@@ -493,8 +494,7 @@ tbody tr:last-child td{border-bottom:none;}
         <table>
           <thead>
             <tr>
-              <th>Fecha</th><th>Símbolo</th><th>Lado</th><th>Cuenta</th><th>Entrada</th><th>Salida</th>
-              <th>Tamaño</th><th>Comisión</th><th>P&L</th><th>Retorno</th><th>Acciones</th>
+              <th>Fecha</th><th>Símbolo</th><th>Lado</th><th>Cuenta</th><th>P&L</th><th>Imagen</th><th>Acciones</th>
             </tr>
           </thead>
           <tbody id="tradesBody"></tbody>
@@ -567,22 +567,20 @@ tbody tr:last-child td{border-bottom:none;}
       <div class="form-group"><label>Lado</label>
         <select id="tLado"><option value="long">Long</option><option value="short">Short</option></select>
       </div>
-      <div class="form-group"><label>Tamaño</label><input type="number" id="tTamano" step="any" placeholder="100"></div>
+      <div class="form-group"><label>Cuenta</label><select id="tCuenta"></select></div>
     </div>
     <div class="form-group" style="margin-bottom:12px;">
-      <label>Cuenta</label><select id="tCuenta"></select>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label>Precio entrada</label><input type="number" id="tEntrada" step="any"></div>
-      <div class="form-group"><label>Precio salida</label><input type="number" id="tSalida" step="any"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label>Comisiones</label><input type="number" id="tComision" step="any" value="0"></div>
-      <div class="form-group"><label>P&L manual (opcional)</label><input type="number" id="tPnlManual" step="any" placeholder="Auto-calculado"></div>
+      <label>P&L</label>
+      <input type="number" id="tPnlManual" step="any" placeholder="Ej. 150 o -80">
     </div>
     <div class="form-group" style="margin-bottom:12px;">
-      <label>Notas</label>
-      <textarea id="tNotas" rows="3" placeholder="Setup, razones de entrada/salida..."></textarea>
+      <label>Imagen (opcional)</label>
+      <input type="file" id="tImagenFile" accept="image/*" onchange="handleTradeImage(event)">
+      <div id="tImagenPreviewWrap" style="display:none;margin-top:8px;">
+        <img id="tImagenPreview" style="max-width:100%;max-height:160px;border-radius:12px;border:1px solid var(--border);display:block;">
+        <button type="button" class="btn btn-sm btn-danger" style="margin-top:8px;" onclick="removeTradeImage()">Quitar imagen</button>
+      </div>
+      <input type="hidden" id="tImagenData">
     </div>
     <div class="modal-actions">
       <button class="btn" onclick="closeTradeModal()">Cancelar</button>
@@ -639,6 +637,16 @@ tbody tr:last-child td{border-bottom:none;}
   </div>
 </div>
 
+<!-- IMAGE MODAL -->
+<div class="overlay" id="imageOverlay">
+  <div class="modal" style="width:auto;padding:12px;">
+    <img id="imageModalImg" style="max-width:100%;max-height:80vh;border-radius:14px;display:block;">
+    <div class="modal-actions">
+      <button class="btn" onclick="closeImageModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ---------------- STORAGE ---------------- */
 const DB_KEYS = { trades:'tj_trades', accounts:'tj_accounts', currentAccount:'tj_current_account' };
@@ -676,12 +684,7 @@ function fmtMoney(n){
   return s;
 }
 function pnlClass(n){ return n>=0 ? 'pos' : 'neg'; }
-function calcPnl(t){
-  if(t.pnlManual !== null && t.pnlManual !== undefined && t.pnlManual !== '') return parseFloat(t.pnlManual);
-  const dir = t.lado === 'short' ? -1 : 1;
-  const raw = (t.salida - t.entrada) * t.tamano * dir;
-  return raw - (t.comision||0);
-}
+function calcPnl(t){ return parseFloat(t.pnlManual) || 0; }
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function todayISO(){ return new Date().toISOString().slice(0,10); }
 
@@ -823,28 +826,53 @@ function openTradeModal(id){
   }
   document.getElementById('tradeModalTitle').textContent = id ? 'Editar operación' : 'Nueva operación';
   document.getElementById('tradeId').value = id || '';
+  removeTradeImage();
   if(id){
     const t = trades.find(x=>x.id===id);
     document.getElementById('tFecha').value = t.fecha;
     document.getElementById('tSimbolo').value = t.simbolo;
     document.getElementById('tLado').value = t.lado;
-    document.getElementById('tTamano').value = t.tamano;
     populateTradeAccountSelect(t.cuentaId);
-    document.getElementById('tEntrada').value = t.entrada;
-    document.getElementById('tSalida').value = t.salida;
-    document.getElementById('tComision').value = t.comision;
     document.getElementById('tPnlManual').value = t.pnlManual ?? '';
-    document.getElementById('tNotas').value = t.notas || '';
+    if(t.imagen){
+      document.getElementById('tImagenData').value = t.imagen;
+      document.getElementById('tImagenPreview').src = t.imagen;
+      document.getElementById('tImagenPreviewWrap').style.display = 'block';
+    }
   } else {
-    ['tSimbolo','tTamano','tEntrada','tSalida','tPnlManual','tNotas'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('tSimbolo').value = '';
+    document.getElementById('tPnlManual').value = '';
     document.getElementById('tFecha').value = todayISO();
     document.getElementById('tLado').value = 'long';
-    document.getElementById('tComision').value = 0;
     populateTradeAccountSelect();
   }
   document.getElementById('tradeOverlay').classList.add('active');
 }
 function closeTradeModal(){ document.getElementById('tradeOverlay').classList.remove('active'); }
+function handleTradeImage(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    document.getElementById('tImagenData').value = ev.target.result;
+    document.getElementById('tImagenPreview').src = ev.target.result;
+    document.getElementById('tImagenPreviewWrap').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+function removeTradeImage(){
+  document.getElementById('tImagenData').value = '';
+  document.getElementById('tImagenFile').value = '';
+  document.getElementById('tImagenPreview').src = '';
+  document.getElementById('tImagenPreviewWrap').style.display = 'none';
+}
+function viewTradeImage(id){
+  const t = trades.find(x=>x.id===id);
+  if(!t || !t.imagen) return;
+  document.getElementById('imageModalImg').src = t.imagen;
+  document.getElementById('imageOverlay').classList.add('active');
+}
+function closeImageModal(){ document.getElementById('imageOverlay').classList.remove('active'); }
 function saveTrade(){
   const id = document.getElementById('tradeId').value;
   const simbolo = document.getElementById('tSimbolo').value.trim().toUpperCase();
@@ -852,18 +880,15 @@ function saveTrade(){
   const cuentaId = document.getElementById('tCuenta').value;
   if(!cuentaId){ alert('Selecciona una cuenta'); return; }
   const pnlManualVal = document.getElementById('tPnlManual').value;
+  if(pnlManualVal === ''){ alert('Introduce el P&L de la operación'); return; }
   const t = {
     id: id || uid(),
     fecha: document.getElementById('tFecha').value || todayISO(),
     simbolo,
     lado: document.getElementById('tLado').value,
     cuentaId,
-    tamano: parseFloat(document.getElementById('tTamano').value) || 0,
-    entrada: parseFloat(document.getElementById('tEntrada').value) || 0,
-    salida: parseFloat(document.getElementById('tSalida').value) || 0,
-    comision: parseFloat(document.getElementById('tComision').value) || 0,
-    pnlManual: pnlManualVal === '' ? null : parseFloat(pnlManualVal),
-    notas: document.getElementById('tNotas').value
+    pnlManual: parseFloat(pnlManualVal),
+    imagen: document.getElementById('tImagenData').value || null
   };
   if(id){
     const idx = trades.findIndex(x=>x.id===id);
@@ -1008,19 +1033,14 @@ function renderTradesTable(){
   document.getElementById('tradesEmpty').style.display = list.length ? 'none' : 'block';
   list.forEach(t=>{
     const pnl = calcPnl(t);
-    const ret = t.entrada ? (((t.salida-t.entrada)/t.entrada)*100*(t.lado==='short'?-1:1)) : 0;
     const acc = accounts.find(a=>a.id===t.cuentaId);
     body.innerHTML += `<tr>
       <td>${t.fecha}</td>
       <td><b>${t.simbolo}</b></td>
       <td><span class="tag ${t.lado==='long'?'tag-long':'tag-short'}">${t.lado==='long'?'Long':'Short'}</span></td>
       <td>${acc ? acc.nombre : '—'}</td>
-      <td>${t.entrada}</td>
-      <td>${t.salida}</td>
-      <td>${t.tamano}</td>
-      <td>${fmtMoney(t.comision||0)}</td>
       <td class="${pnlClass(pnl)}"><b>${fmtMoney(pnl)}</b></td>
-      <td class="${pnlClass(ret)}">${ret.toFixed(2)}%</td>
+      <td>${t.imagen ? `<img src="${t.imagen}" class="trade-thumb" onclick="viewTradeImage('${t.id}')">` : '—'}</td>
       <td>
         <button class="btn btn-sm" onclick="openTradeModal('${t.id}')">Editar</button>
         <button class="btn btn-sm btn-danger" onclick="deleteTrade('${t.id}')">Eliminar</button>
@@ -1033,10 +1053,10 @@ document.getElementById('tradeSearch').addEventListener('input', renderTradesTab
 function exportTrades(){
   const list = getAccountTrades(currentAccountId);
   if(!list.length){ alert('No hay operaciones para exportar'); return; }
-  const headers = ['fecha','simbolo','lado','cuenta','entrada','salida','tamano','comision','pnl','notas'];
+  const headers = ['fecha','simbolo','lado','cuenta','pnl'];
   const rows = list.map(t=>{
     const acc = accounts.find(a=>a.id===t.cuentaId);
-    return [t.fecha,t.simbolo,t.lado,acc?acc.nombre:'',t.entrada,t.salida,t.tamano,t.comision,calcPnl(t),(t.notas||'').replace(/,/g,';')];
+    return [t.fecha,t.simbolo,t.lado,acc?acc.nombre:'',calcPnl(t)];
   });
   const csv = [headers.join(','), ...rows.map(r=>r.join(','))].join('\n');
   const blob = new Blob([csv], {type:'text/csv'});
