@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tradyum</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0a0e1e;
+  --panel:rgba(22,27,48,.55);
+  --panel-solid:#141a33;
+  --panel2:rgba(255,255,255,.06);
+  --border:rgba(255,255,255,.09);
+  --text:#eef0fb;
+  --muted:#8891b3;
+  --accent:#7c5cff;
+  --accent2:#4f8cff;
+  --green:#3ddc97;
+  --green-dim:rgba(61,220,151,.14);
+  --red:#ff5470;
+  --red-dim:rgba(255,84,112,.14);
+  --yellow:#ffb84d;
+  --yellow-dim:rgba(255,184,77,.14);
+  --radius:22px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{color-scheme:dark;}
+body{
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  background:linear-gradient(165deg,#0a0e20 0%,#0d1330 45%,#151b3c 100%);
+  color:var(--text);
+  display:flex;
+  min-height:100vh;
+  overflow-x:hidden;
+  position:relative;
+}
+body::before{
+  content:'';
+  position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background-image:
+    radial-gradient(1.4px 1.4px at 15% 20%, rgba(255,255,255,.85), transparent),
+    radial-gradient(1px 1px at 65% 12%, rgba(255,255,255,.6), transparent),
+    radial-gradient(1.6px 1.6px at 40% 55%, rgba(255,255,255,.7), transparent),
+    radial-gradient(1px 1px at 85% 40%, rgba(255,255,255,.5), transparent),
+    radial-gradient(1.2px 1.2px at 25% 80%, rgba(255,255,255,.55), transparent),
+    radial-gradient(1px 1px at 92% 75%, rgba(255,255,255,.6), transparent),
+    radial-gradient(1.4px 1.4px at 55% 30%, rgba(255,255,255,.5), transparent);
+  background-repeat:repeat;
+  background-size:340px 340px;
+  opacity:.8;
+}
+body::after{
+  content:'';
+  position:fixed;left:0;right:0;bottom:0;height:42vh;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(55% 65% at 50% 100%, rgba(124,92,255,.28), transparent 70%),
+    radial-gradient(35% 45% at 80% 100%, rgba(79,140,255,.18), transparent 70%),
+    linear-gradient(180deg, transparent 0%, rgba(9,12,26,.65) 55%, rgba(6,8,18,.96) 100%);
+  clip-path:polygon(0% 100%, 0% 62%, 7% 68%, 16% 46%, 24% 60%, 33% 38%, 44% 58%, 53% 40%, 63% 56%, 72% 44%, 82% 62%, 91% 50%, 100% 60%, 100% 100%);
+  opacity:.9;
+}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+
+/* ---------- Sidebar ---------- */
+.sidebar{
+  width:240px;
+  min-width:240px;
+  background:var(--panel);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--border);
+  border-radius:26px;
+  box-shadow:0 24px 60px rgba(0,0,0,.4);
+  display:flex;
+  flex-direction:column;
+  padding:22px 16px;
+  position:sticky;
+  top:18px;
+  height:calc(100vh - 36px);
+  margin:18px 0 18px 18px;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:0 6px 20px 6px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:16px;
+}
+.brand-logo{
+  width:36px;height:36px;border-radius:12px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:16px;color:#fff;
+  box-shadow:0 8px 18px rgba(124,92,255,.4);
+}
+.brand-name{font-weight:700;font-size:17px;letter-spacing:.2px;}
+.brand-name span{color:var(--accent2);}
+
+.nav{display:flex;flex-direction:column;gap:4px;}
+.nav-item{
+  display:flex;align-items:center;gap:12px;
+  padding:6px 10px 6px 6px;border-radius:16px;
+  color:var(--muted);font-size:14px;font-weight:600;
+  cursor:pointer;user-select:none;
+  transition:.18s;
+}
+.nav-icon{
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.04);
+  transition:.18s;
+}
+.nav-item svg{width:17px;height:17px;flex-shrink:0;}
+.nav-item:hover{color:var(--text);}
+.nav-item:hover .nav-icon{background:rgba(255,255,255,.1);}
+.nav-item.active{color:#fff;}
+.nav-item.active .nav-icon{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  box-shadow:0 8px 18px rgba(124,92,255,.45);
+}
+
+.sidebar-footer{
+  margin-top:auto;
+  padding-top:16px;
+  border-top:1px solid var(--border);
+  font-size:12px;color:var(--muted);
+}
+.account-switcher{margin-bottom:12px;}
+.account-switcher label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;display:block;margin-bottom:6px;}
+.account-switcher select{width:100%;}
+.balance-box{
+  background:linear-gradient(160deg,rgba(124,92,255,.16),rgba(79,140,255,.08));
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:14px;
+  margin-top:10px;
+}
+.balance-box .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.balance-box .val{font-size:19px;font-weight:800;margin-top:4px;
+  background:linear-gradient(135deg,#fff,var(--accent2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+
+/* ---------- Main ---------- */
+.main{
+  flex:1;
+  padding:26px 30px 60px 26px;
+  max-width:100%;
+  overflow-x:hidden;
+}
+.topbar{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:24px;
+  flex-wrap:wrap;
+  gap:12px;
+}
+.topbar h1{font-size:26px;font-weight:800;letter-spacing:.2px;
+  background:linear-gradient(100deg,#fff 20%,var(--accent2) 65%,var(--accent) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.topbar .sub{color:var(--muted);font-size:13px;margin-top:4px;}
+.topbar-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+
+select, input, textarea{
+  background:var(--panel2);
+  border:1px solid var(--border);
+  color:var(--text);
+  border-radius:14px;
+  padding:9px 14px;
+  font-size:13px;
+  font-family:inherit;
+  outline:none;
+}
+select:focus, input:focus, textarea:focus{border-color:var(--accent2);}
+
+.btn{
+  background:var(--panel2);
+  border:1px solid var(--border);
+  color:var(--text);
+  padding:9px 18px;
+  border-radius:999px;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;
+  transition:.18s;
+  backdrop-filter:blur(6px);
+}
+.btn:hover{border-color:var(--accent2);background:rgba(255,255,255,.1);}
+.btn-primary{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;color:#fff;
+  box-shadow:0 10px 24px rgba(124,92,255,.4);
+}
+.btn-primary:hover{opacity:.92;transform:translateY(-1px);}
+.btn-danger{background:var(--red-dim);border:1px solid rgba(255,84,112,.4);color:var(--red);}
+.btn-sm{padding:6px 13px;font-size:12px;}
+.btn-icon{padding:8px;width:36px;height:36px;justify-content:center;border-radius:50%;}
+
+.view{display:none;}
+.view.active{display:block;animation:fade .2s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+/* ---------- Cards ---------- */
+.grid{display:grid;gap:16px;}
+.grid-5{grid-template-columns:repeat(5,1fr);}
+.grid-4{grid-template-columns:repeat(4,1fr);}
+.grid-2{grid-template-columns:2fr 1fr;}
+.grid-3{grid-template-columns:repeat(3,1fr);}
+@media(max-width:1200px){.grid-5{grid-template-columns:repeat(2,1fr);}.grid-4{grid-template-columns:repeat(2,1fr);}.grid-2{grid-template-columns:1fr;}.grid-3{grid-template-columns:1fr;}}
+
+.card{
+  background:var(--panel);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:20px;
+  box-shadow:0 14px 34px rgba(0,0,0,.25);
+}
+.stat-card .lbl{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+.stat-card .val{font-size:25px;font-weight:800;margin-top:8px;}
+.stat-card .sub{font-size:12px;color:var(--muted);margin-top:4px;}
+.pos{color:var(--green);}
+.neg{color:var(--red);}
+
+.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.card-head h3{font-size:15px;font-weight:700;}
+
+/* ---------- Table ---------- */
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{
+  text-align:left;color:var(--muted);font-weight:600;font-size:11px;
+  text-transform:uppercase;letter-spacing:.4px;
+  padding:10px 12px;border-bottom:1px solid var(--border);
+}
+tbody td{padding:12px;border-bottom:1px solid var(--border);}
+tbody tr:hover{background:rgba(255,255,255,.04);}
+tbody tr:last-child td{border-bottom:none;}
+.tag{
+  display:inline-block;padding:4px 11px;border-radius:999px;font-size:11px;font-weight:700;
+}
+.tag-long{background:var(--green-dim);color:var(--green);}
+.tag-short{background:var(--red-dim);color:var(--red);}
+.empty-state{text-align:center;padding:50px 20px;color:var(--muted);}
+.empty-state svg{width:44px;height:44px;opacity:.35;margin-bottom:12px;}
+
+/* ---------- Calendar ---------- */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:14px;}
+.cal-day{
+  background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:16px;
+  padding:8px;min-height:78px;display:flex;flex-direction:column;justify-content:space-between;
+  cursor:pointer;transition:.15s;
+}
+.cal-day:hover{border-color:var(--accent2);}
+.cal-day.empty{background:transparent;border:none;cursor:default;}
+.cal-day.win{background:var(--green-dim);border-color:rgba(61,220,151,.35);}
+.cal-day.loss{background:var(--red-dim);border-color:rgba(255,84,112,.35);}
+.cal-day .dn{font-size:12px;color:var(--muted);font-weight:600;}
+.cal-day .dp{font-size:13px;font-weight:800;margin-top:4px;}
+.cal-day .dp.pos{color:var(--green);}
+.cal-day .dp.neg{color:var(--red);}
+.cal-day .dc{font-size:10px;color:var(--muted);}
+.cal-dow{font-size:11px;color:var(--muted);text-align:center;font-weight:700;text-transform:uppercase;}
+
+/* ---------- Modal ---------- */
+.overlay{
+  position:fixed;inset:0;background:rgba(5,7,16,.7);
+  display:none;align-items:center;justify-content:center;z-index:100;
+  backdrop-filter:blur(4px);
+}
+.overlay.active{display:flex;}
+.modal{
+  background:var(--panel-solid);border:1px solid var(--border);border-radius:24px;
+  width:520px;max-width:92vw;max-height:88vh;overflow-y:auto;padding:24px;
+  box-shadow:0 30px 70px rgba(0,0,0,.5);
+}
+.modal h2{font-size:17px;margin-bottom:18px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group label{font-size:12px;color:var(--muted);font-weight:600;}
+.form-group input, .form-group select, .form-group textarea{width:100%;}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;}
+
+.chart-wrap{position:relative;height:280px;}
+.chart-wrap.sm{height:220px;}
+
+.badge-neutral{background:rgba(255,255,255,.08);color:var(--muted);padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;}
+
+/* ---------- Accounts ---------- */
+.account-card{display:flex;flex-direction:column;gap:10px;}
+.account-card .ac-head{display:flex;justify-content:space-between;align-items:flex-start;}
+.account-card .ac-name{font-size:15px;font-weight:700;}
+.account-card .ac-broker{font-size:12px;color:var(--muted);margin-top:2px;}
+.account-card .ac-balance{font-size:22px;font-weight:800;}
+.account-card .ac-pnl{font-size:12px;margin-top:2px;}
+.account-type{padding:4px 11px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;}
+.account-type-fondeo{background:var(--yellow-dim);color:var(--yellow);}
+.account-type-propio{background:var(--green-dim);color:var(--green);}
+.account-type-demo{background:rgba(79,140,255,.16);color:var(--accent2);}
+.account-card .ac-actions{display:flex;gap:8px;margin-top:4px;}
+
+/* ---------- Bottom nav (mobile / tablet) ---------- */
+.bottom-nav{
+  display:none;
+  position:fixed;left:14px;right:14px;bottom:14px;z-index:150;
+  align-items:center;justify-content:space-around;
+  background:rgba(15,19,38,.6);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--border);
+  border-radius:999px;
+  padding:8px;
+  box-shadow:0 20px 45px rgba(0,0,0,.45);
+}
+.bn-item{
+  width:46px;height:46px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--muted);cursor:pointer;user-select:none;
+  transition:.2s;
+}
+.bn-item svg{width:20px;height:20px;}
+.bn-item.active{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;
+  transform:translateY(-10px) scale(1.05);
+  box-shadow:0 14px 28px rgba(124,92,255,.5);
+}
+
+@media(max-width:860px){
+  .bottom-nav{display:flex;}
+  .sidebar{
+    position:fixed;top:0;left:0;right:0;bottom:auto;
+    width:100%;max-width:none;height:auto;
+    margin:0;border-radius:0 0 24px 24px;
+    flex-direction:row;align-items:center;justify-content:space-between;
+    padding:12px 16px;
+    z-index:120;
+  }
+  .sidebar .brand{display:none;}
+  .sidebar .nav{display:none;}
+  .sidebar-footer{
+    margin-top:0;padding-top:0;border-top:none;
+    display:flex;flex-direction:row;align-items:center;gap:10px;
+    width:100%;
+  }
+  .account-switcher{margin-bottom:0;flex:1;min-width:0;}
+  .account-switcher label{display:none;}
+  .account-switcher select{width:100%;}
+  .balance-box{margin-top:0;flex-shrink:0;padding:9px 14px;text-align:right;}
+  .balance-box .lbl{display:none;}
+  .balance-box .val{font-size:15px;margin-top:0;}
+  .main{
+    margin-left:0;padding:88px 16px 110px 16px;
+  }
+  .topbar h1{font-size:21px;}
+  .grid-5,.grid-4,.grid-3,.grid-2{grid-template-columns:1fr;}
+  .form-row{grid-template-columns:1fr;}
+  .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .table-scroll table{min-width:640px;}
+  .cal-day{min-height:56px;padding:6px;}
+  .modal{padding:18px;}
+}
+@media(max-width:420px){
+  .cal-grid{gap:5px;}
+  .cal-day .dc{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar" id="sidebar">
+  <div class="brand">
+    <div class="brand-logo">T</div>
+    <div class="brand-name">Trad<span>yum</span></div>
+  </div>
+  <div class="nav" id="navMenu">
+    <div class="nav-item active" data-view="dashboard">
+      <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></div>
+      <span>Dashboard</span>
+    </div>
+    <div class="nav-item" data-view="trades">
+      <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-4"/></svg></div>
+      <span>Operaciones</span>
+    </div>
+    <div class="nav-item" data-view="calendar">
+      <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+      <span>Calendario</span>
+    </div>
+    <div class="nav-item" data-view="cuentas">
+      <div class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div>
+      <span>Cuentas</span>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="account-switcher">
+      <label>Cuenta activa</label>
+      <select id="accountSwitcher"></select>
+    </div>
+    <div class="balance-box">
+      <div class="lbl">Balance de cuenta</div>
+      <div class="val" id="sidebarBalance">$0.00</div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-nav" id="bottomNav">
+  <div class="bn-item nav-item active" data-view="dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+  </div>
+  <div class="bn-item nav-item" data-view="trades">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-4"/></svg>
+  </div>
+  <div class="bn-item nav-item" data-view="calendar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+  </div>
+  <div class="bn-item nav-item" data-view="cuentas">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- DASHBOARD -->
+  <div class="view active" id="view-dashboard">
+    <div class="topbar">
+      <div>
+        <h1>Dashboard</h1>
+        <div class="sub">Resumen general de tu rendimiento de trading</div>
+      </div>
+      <div class="topbar-actions">
+        <select id="dashRange">
+          <option value="all">Todo el tiempo</option>
+          <option value="month">Este mes</option>
+          <option value="week">Esta semana</option>
+        </select>
+        <button class="btn btn-primary" onclick="openTradeModal()">+ Nueva operación</button>
+      </div>
+    </div>
+
+    <div class="grid grid-5" style="margin-bottom:18px;">
+      <div class="card stat-card"><div class="lbl">P&L Neto</div><div class="val" id="statNetPL">$0.00</div><div class="sub" id="statNetPLSub">0 operaciones</div></div>
+      <div class="card stat-card"><div class="lbl">Tasa de acierto</div><div class="val" id="statWinRate">0%</div><div class="sub" id="statWinRateSub">0G / 0P</div></div>
+      <div class="card stat-card"><div class="lbl">Factor de beneficio</div><div class="val" id="statPF">0.00</div><div class="sub">Ganancia / Pérdida</div></div>
+      <div class="card stat-card"><div class="lbl">Ganancia media</div><div class="val pos" id="statAvgWin">$0.00</div><div class="sub" id="statAvgLoss">Pérdida media: $0.00</div></div>
+      <div class="card stat-card"><div class="lbl">Mejor / Peor día</div><div class="val" id="statBestDay">$0.00</div><div class="sub" id="statWorstDay">Peor: $0.00</div></div>
+    </div>
+
+    <div class="grid grid-2" style="margin-bottom:18px;">
+      <div class="card">
+        <div class="card-head"><h3>Curva de capital</h3><span class="badge-neutral" id="equityBadge">Acumulado</span></div>
+        <div class="chart-wrap"><canvas id="chartEquity"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Ganadoras vs Perdedoras</h3></div>
+        <div class="chart-wrap"><canvas id="chartWinLoss"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-head"><h3>Operaciones recientes</h3><span class="btn btn-sm" onclick="switchView('trades')">Ver todas</span></div>
+        <table>
+          <thead><tr><th>Fecha</th><th>Símbolo</th><th>Lado</th><th>P&L</th></tr></thead>
+          <tbody id="recentTradesBody"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>P&L diario (mes actual)</h3></div>
+        <div class="chart-wrap sm"><canvas id="chartDaily"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRADES -->
+  <div class="view" id="view-trades">
+    <div class="topbar">
+      <div>
+        <h1>Operaciones</h1>
+        <div class="sub">Historial completo de tus trades</div>
+      </div>
+      <div class="topbar-actions">
+        <input type="text" id="tradeSearch" placeholder="Buscar símbolo..." style="width:180px;">
+        <button class="btn" onclick="exportTrades()">Exportar CSV</button>
+        <button class="btn btn-primary" onclick="openTradeModal()">+ Nueva operación</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th><th>Símbolo</th><th>Lado</th><th>Cuenta</th><th>Entrada</th><th>Salida</th>
+              <th>Tamaño</th><th>Comisión</th><th>P&L</th><th>Retorno</th><th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tradesBody"></tbody>
+        </table>
+      </div>
+      <div id="tradesEmpty" class="empty-state" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-4"/></svg>
+        <div>Aún no hay operaciones registradas</div>
+        <button class="btn btn-primary" style="margin-top:12px;" onclick="openTradeModal()">Añadir la primera</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="view" id="view-calendar">
+    <div class="topbar">
+      <div>
+        <h1>Calendario</h1>
+        <div class="sub">P&L diario visualizado por mes</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-icon" onclick="calShift(-1)">‹</button>
+        <div id="calMonthLabel" style="font-weight:700;min-width:150px;text-align:center;"></div>
+        <button class="btn btn-icon" onclick="calShift(1)">›</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="grid" style="grid-template-columns:repeat(7,1fr);gap:8px;">
+        <div class="cal-dow">Dom</div><div class="cal-dow">Lun</div><div class="cal-dow">Mar</div>
+        <div class="cal-dow">Mié</div><div class="cal-dow">Jue</div><div class="cal-dow">Vie</div><div class="cal-dow">Sáb</div>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+  </div>
+
+  <!-- CUENTAS -->
+  <div class="view" id="view-cuentas">
+    <div class="topbar">
+      <div>
+        <h1>Cuentas</h1>
+        <div class="sub">Gestiona tus cuentas de trading: fondeo, capital propio o demo</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn" onclick="exportData()">Exportar datos (JSON)</button>
+        <label class="btn" style="text-align:center;cursor:pointer;">
+          Importar datos (JSON)
+          <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(event)">
+        </label>
+        <button class="btn btn-primary" onclick="openAccountModal()">+ Nueva cuenta</button>
+      </div>
+    </div>
+    <div class="grid grid-3" id="accountsGrid"></div>
+    <div class="card" style="margin-top:18px;max-width:340px;">
+      <button class="btn btn-danger" style="width:100%;" onclick="resetAllData()">Borrar todos los datos</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- TRADE MODAL -->
+<div class="overlay" id="tradeOverlay">
+  <div class="modal">
+    <h2 id="tradeModalTitle">Nueva operación</h2>
+    <input type="hidden" id="tradeId">
+    <div class="form-row">
+      <div class="form-group"><label>Fecha</label><input type="date" id="tFecha"></div>
+      <div class="form-group"><label>Símbolo</label><input type="text" id="tSimbolo" placeholder="AAPL"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Lado</label>
+        <select id="tLado"><option value="long">Long</option><option value="short">Short</option></select>
+      </div>
+      <div class="form-group"><label>Tamaño</label><input type="number" id="tTamano" step="any" placeholder="100"></div>
+    </div>
+    <div class="form-group" style="margin-bottom:12px;">
+      <label>Cuenta</label><select id="tCuenta"></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Precio entrada</label><input type="number" id="tEntrada" step="any"></div>
+      <div class="form-group"><label>Precio salida</label><input type="number" id="tSalida" step="any"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Comisiones</label><input type="number" id="tComision" step="any" value="0"></div>
+      <div class="form-group"><label>P&L manual (opcional)</label><input type="number" id="tPnlManual" step="any" placeholder="Auto-calculado"></div>
+    </div>
+    <div class="form-group" style="margin-bottom:12px;">
+      <label>Notas</label>
+      <textarea id="tNotas" rows="3" placeholder="Setup, razones de entrada/salida..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeTradeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTrade()">Guardar operación</button>
+    </div>
+  </div>
+</div>
+
+<!-- ACCOUNT MODAL -->
+<div class="overlay" id="accountOverlay">
+  <div class="modal">
+    <h2 id="accountModalTitle">Nueva cuenta</h2>
+    <input type="hidden" id="acId">
+    <div class="form-group" style="margin-bottom:12px;">
+      <label>Nombre de la cuenta</label>
+      <input type="text" id="acNombre" placeholder="Ej. FTMO 100K, Cuenta personal, Demo Binance">
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Tipo</label>
+        <select id="acTipo">
+          <option value="fondeo">Cuenta de fondeo</option>
+          <option value="propio">Capital propio</option>
+          <option value="demo">Demo</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Broker / Prop firm</label><input type="text" id="acBroker" placeholder="Opcional"></div>
+    </div>
+    <div class="form-group" style="margin-bottom:12px;">
+      <label>Balance inicial</label>
+      <input type="number" id="acBalance" step="0.01" placeholder="10000">
+    </div>
+    <div class="form-group" style="margin-bottom:12px;">
+      <label>Notas</label>
+      <textarea id="acNotas" rows="2" placeholder="Reglas de la cuenta, objetivos, límites de riesgo..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeAccountModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveAccount()">Guardar cuenta</button>
+    </div>
+  </div>
+</div>
+
+<!-- DAY DETAIL MODAL -->
+<div class="overlay" id="dayOverlay">
+  <div class="modal">
+    <h2 id="dayModalTitle">Detalle del día</h2>
+    <table>
+      <thead><tr><th>Símbolo</th><th>Lado</th><th>P&L</th></tr></thead>
+      <tbody id="dayModalBody"></tbody>
+    </table>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeDayModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------- STORAGE ---------------- */
+const DB_KEYS = { trades:'tj_trades', accounts:'tj_accounts', currentAccount:'tj_current_account' };
+function load(key, fallback){ try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; } }
+function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+
+let trades = load(DB_KEYS.trades, []);
+let accounts = load(DB_KEYS.accounts, []);
+let currentAccountId = load(DB_KEYS.currentAccount, 'all');
+
+const ACCOUNT_TYPE_LABELS = { fondeo:'Fondeo', propio:'Capital propio', demo:'Demo' };
+
+/* ---------------- NAV ---------------- */
+const views = ['dashboard','trades','calendar','cuentas'];
+function switchView(name){
+  views.forEach(v=>{
+    document.getElementById('view-'+v).classList.toggle('active', v===name);
+  });
+  document.querySelectorAll('.nav-item').forEach(el=>{
+    el.classList.toggle('active', el.dataset.view===name);
+  });
+  if(name==='dashboard') renderDashboard();
+  if(name==='trades') renderTradesTable();
+  if(name==='calendar') renderCalendar();
+  if(name==='cuentas') renderAccounts();
+}
+document.addEventListener('click', e=>{
+  const item = e.target.closest('.nav-item');
+  if(item) switchView(item.dataset.view);
+});
+
+/* ---------------- HELPERS ---------------- */
+function fmtMoney(n){
+  const s = (n<0?'-':'') + '$' + Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  return s;
+}
+function pnlClass(n){ return n>=0 ? 'pos' : 'neg'; }
+function calcPnl(t){
+  if(t.pnlManual !== null && t.pnlManual !== undefined && t.pnlManual !== '') return parseFloat(t.pnlManual);
+  const dir = t.lado === 'short' ? -1 : 1;
+  const raw = (t.salida - t.entrada) * t.tamano * dir;
+  return raw - (t.comision||0);
+}
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+
+/* ---------------- ACCOUNTS ---------------- */
+function getAccountTrades(accountId){
+  if(!accountId || accountId==='all') return trades;
+  return trades.filter(t=>t.cuentaId===accountId);
+}
+function getAccountBalance(acc){
+  const pnl = trades.filter(t=>t.cuentaId===acc.id).reduce((a,t)=>a+calcPnl(t),0);
+  return acc.balanceInicial + pnl;
+}
+function getCurrentBalance(){
+  if(currentAccountId==='all'){
+    const initSum = accounts.reduce((a,acc)=>a+acc.balanceInicial,0);
+    const pnlSum = trades.reduce((a,t)=>a+calcPnl(t),0);
+    return initSum + pnlSum;
+  }
+  const acc = accounts.find(a=>a.id===currentAccountId);
+  return acc ? getAccountBalance(acc) : 0;
+}
+function renderAccountSwitcher(){
+  const sel = document.getElementById('accountSwitcher');
+  const prev = currentAccountId;
+  sel.innerHTML = '<option value="all">Todas las cuentas</option>' +
+    accounts.map(a=>`<option value="${a.id}">${a.nombre}</option>`).join('');
+  if(!accounts.find(a=>a.id===prev) && prev!=='all'){ currentAccountId = 'all'; save(DB_KEYS.currentAccount, currentAccountId); }
+  sel.value = currentAccountId;
+}
+document.getElementById('accountSwitcher').addEventListener('change', e=>{
+  currentAccountId = e.target.value;
+  save(DB_KEYS.currentAccount, currentAccountId);
+  renderDashboard();
+  const activeView = document.querySelector('.nav-item.active');
+  if(activeView){
+    if(activeView.dataset.view==='trades') renderTradesTable();
+    if(activeView.dataset.view==='calendar') renderCalendar();
+  }
+});
+function populateTradeAccountSelect(selectedId){
+  const sel = document.getElementById('tCuenta');
+  sel.innerHTML = accounts.map(a=>`<option value="${a.id}">${a.nombre}</option>`).join('');
+  if(selectedId) sel.value = selectedId;
+  else if(currentAccountId!=='all') sel.value = currentAccountId;
+}
+function openAccountModal(id){
+  document.getElementById('accountModalTitle').textContent = id ? 'Editar cuenta' : 'Nueva cuenta';
+  document.getElementById('acId').value = id || '';
+  if(id){
+    const a = accounts.find(x=>x.id===id);
+    document.getElementById('acNombre').value = a.nombre;
+    document.getElementById('acTipo').value = a.tipo;
+    document.getElementById('acBroker').value = a.broker || '';
+    document.getElementById('acBalance').value = a.balanceInicial;
+    document.getElementById('acNotas').value = a.notas || '';
+  } else {
+    document.getElementById('acNombre').value = '';
+    document.getElementById('acTipo').value = 'fondeo';
+    document.getElementById('acBroker').value = '';
+    document.getElementById('acBalance').value = '';
+    document.getElementById('acNotas').value = '';
+  }
+  document.getElementById('accountOverlay').classList.add('active');
+}
+function closeAccountModal(){ document.getElementById('accountOverlay').classList.remove('active'); }
+function saveAccount(){
+  const id = document.getElementById('acId').value;
+  const nombre = document.getElementById('acNombre').value.trim();
+  if(!nombre){ alert('Introduce un nombre para la cuenta'); return; }
+  const a = {
+    id: id || uid(),
+    nombre,
+    tipo: document.getElementById('acTipo').value,
+    broker: document.getElementById('acBroker').value.trim(),
+    balanceInicial: parseFloat(document.getElementById('acBalance').value) || 0,
+    notas: document.getElementById('acNotas').value
+  };
+  if(id){ accounts[accounts.findIndex(x=>x.id===id)] = a; } else { accounts.push(a); }
+  save(DB_KEYS.accounts, accounts);
+  closeAccountModal();
+  renderAccountSwitcher();
+  renderAccounts();
+  renderDashboard();
+}
+function deleteAccount(id){
+  const linked = trades.filter(t=>t.cuentaId===id).length;
+  const msg = linked ? `Esta cuenta tiene ${linked} operación(es) asociada(s). Se eliminarán también. ¿Continuar?` : '¿Eliminar esta cuenta?';
+  if(!confirm(msg)) return;
+  accounts = accounts.filter(a=>a.id!==id);
+  trades = trades.filter(t=>t.cuentaId!==id);
+  save(DB_KEYS.accounts, accounts);
+  save(DB_KEYS.trades, trades);
+  if(currentAccountId===id){ currentAccountId = 'all'; save(DB_KEYS.currentAccount, currentAccountId); }
+  renderAccountSwitcher();
+  renderAll();
+}
+function renderAccounts(){
+  const grid = document.getElementById('accountsGrid');
+  grid.innerHTML = '';
+  accounts.forEach(acc=>{
+    const balance = getAccountBalance(acc);
+    const pnl = balance - acc.balanceInicial;
+    grid.innerHTML += `<div class="card account-card">
+      <div class="ac-head">
+        <div>
+          <div class="ac-name">${acc.nombre}</div>
+          ${acc.broker ? `<div class="ac-broker">${acc.broker}</div>` : ''}
+        </div>
+        <span class="account-type account-type-${acc.tipo}">${ACCOUNT_TYPE_LABELS[acc.tipo]||acc.tipo}</span>
+      </div>
+      <div>
+        <div class="ac-balance">${fmtMoney(balance)}</div>
+        <div class="ac-pnl ${pnlClass(pnl)}">${pnl>=0?'+':''}${fmtMoney(pnl)} desde balance inicial de ${fmtMoney(acc.balanceInicial)}</div>
+      </div>
+      <div class="ac-actions">
+        <button class="btn btn-sm" onclick="viewAccountTrades('${acc.id}')">Ver operaciones</button>
+        <button class="btn btn-sm" onclick="openAccountModal('${acc.id}')">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteAccount('${acc.id}')">Eliminar</button>
+      </div>
+    </div>`;
+  });
+  if(!accounts.length){
+    grid.innerHTML = '<div class="empty-state">Aún no tienes cuentas. Crea una cuenta de fondeo, capital propio o demo para empezar a registrar operaciones.</div>';
+  }
+}
+function viewAccountTrades(id){
+  currentAccountId = id;
+  save(DB_KEYS.currentAccount, currentAccountId);
+  renderAccountSwitcher();
+  switchView('trades');
+}
+
+/* ---------------- TRADES CRUD ---------------- */
+function openTradeModal(id){
+  if(!accounts.length){
+    alert('Crea primero una cuenta para poder registrar operaciones');
+    openAccountModal();
+    return;
+  }
+  document.getElementById('tradeModalTitle').textContent = id ? 'Editar operación' : 'Nueva operación';
+  document.getElementById('tradeId').value = id || '';
+  if(id){
+    const t = trades.find(x=>x.id===id);
+    document.getElementById('tFecha').value = t.fecha;
+    document.getElementById('tSimbolo').value = t.simbolo;
+    document.getElementById('tLado').value = t.lado;
+    document.getElementById('tTamano').value = t.tamano;
+    populateTradeAccountSelect(t.cuentaId);
+    document.getElementById('tEntrada').value = t.entrada;
+    document.getElementById('tSalida').value = t.salida;
+    document.getElementById('tComision').value = t.comision;
+    document.getElementById('tPnlManual').value = t.pnlManual ?? '';
+    document.getElementById('tNotas').value = t.notas || '';
+  } else {
+    ['tSimbolo','tTamano','tEntrada','tSalida','tPnlManual','tNotas'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('tFecha').value = todayISO();
+    document.getElementById('tLado').value = 'long';
+    document.getElementById('tComision').value = 0;
+    populateTradeAccountSelect();
+  }
+  document.getElementById('tradeOverlay').classList.add('active');
+}
+function closeTradeModal(){ document.getElementById('tradeOverlay').classList.remove('active'); }
+function saveTrade(){
+  const id = document.getElementById('tradeId').value;
+  const simbolo = document.getElementById('tSimbolo').value.trim().toUpperCase();
+  if(!simbolo){ alert('Introduce un símbolo'); return; }
+  const cuentaId = document.getElementById('tCuenta').value;
+  if(!cuentaId){ alert('Selecciona una cuenta'); return; }
+  const pnlManualVal = document.getElementById('tPnlManual').value;
+  const t = {
+    id: id || uid(),
+    fecha: document.getElementById('tFecha').value || todayISO(),
+    simbolo,
+    lado: document.getElementById('tLado').value,
+    cuentaId,
+    tamano: parseFloat(document.getElementById('tTamano').value) || 0,
+    entrada: parseFloat(document.getElementById('tEntrada').value) || 0,
+    salida: parseFloat(document.getElementById('tSalida').value) || 0,
+    comision: parseFloat(document.getElementById('tComision').value) || 0,
+    pnlManual: pnlManualVal === '' ? null : parseFloat(pnlManualVal),
+    notas: document.getElementById('tNotas').value
+  };
+  if(id){
+    const idx = trades.findIndex(x=>x.id===id);
+    trades[idx] = t;
+  } else {
+    trades.push(t);
+  }
+  save(DB_KEYS.trades, trades);
+  closeTradeModal();
+  renderAll();
+}
+function deleteTrade(id){
+  if(!confirm('¿Eliminar esta operación?')) return;
+  trades = trades.filter(t=>t.id!==id);
+  save(DB_KEYS.trades, trades);
+  renderAll();
+}
+
+/* ---------------- RENDER: DASHBOARD ---------------- */
+let chartEquity, chartWinLoss, chartDaily, chartBySymbol, chartByDow;
+
+function getFilteredTrades(){
+  const range = document.getElementById('dashRange') ? document.getElementById('dashRange').value : 'all';
+  const now = new Date();
+  return getAccountTrades(currentAccountId).filter(t=>{
+    const d = new Date(t.fecha);
+    if(range==='month') return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
+    if(range==='week'){
+      const weekAgo = new Date(); weekAgo.setDate(now.getDate()-7);
+      return d >= weekAgo;
+    }
+    return true;
+  }).sort((a,b)=> new Date(a.fecha) - new Date(b.fecha));
+}
+
+function renderDashboard(){
+  const list = getFilteredTrades();
+  const pnls = list.map(calcPnl);
+  const net = pnls.reduce((a,b)=>a+b,0);
+  const wins = pnls.filter(p=>p>0);
+  const losses = pnls.filter(p=>p<=0);
+  const winRate = list.length ? (wins.length/list.length*100) : 0;
+  const avgWin = wins.length ? wins.reduce((a,b)=>a+b,0)/wins.length : 0;
+  const avgLoss = losses.length ? losses.reduce((a,b)=>a+b,0)/losses.length : 0;
+  const grossWin = wins.reduce((a,b)=>a+b,0);
+  const grossLoss = Math.abs(losses.reduce((a,b)=>a+b,0));
+  const pf = grossLoss ? (grossWin/grossLoss) : (grossWin>0?grossWin:0);
+
+  document.getElementById('statNetPL').textContent = fmtMoney(net);
+  document.getElementById('statNetPL').className = 'val ' + pnlClass(net);
+  document.getElementById('statNetPLSub').textContent = list.length + ' operaciones';
+  document.getElementById('statWinRate').textContent = winRate.toFixed(1)+'%';
+  document.getElementById('statWinRateSub').textContent = wins.length+'G / '+losses.length+'P';
+  document.getElementById('statPF').textContent = pf.toFixed(2);
+  document.getElementById('statAvgWin').textContent = fmtMoney(avgWin);
+  document.getElementById('statAvgLoss').textContent = 'Pérdida media: '+fmtMoney(avgLoss);
+
+  // best/worst day
+  const byDay = {};
+  list.forEach(t=>{ byDay[t.fecha] = (byDay[t.fecha]||0) + calcPnl(t); });
+  const dayVals = Object.values(byDay);
+  const bestDay = dayVals.length ? Math.max(...dayVals) : 0;
+  const worstDay = dayVals.length ? Math.min(...dayVals) : 0;
+  document.getElementById('statBestDay').textContent = fmtMoney(bestDay);
+  document.getElementById('statBestDay').className = 'val ' + pnlClass(bestDay);
+  document.getElementById('statWorstDay').textContent = 'Peor: '+fmtMoney(worstDay);
+
+  // sidebar balance
+  document.getElementById('sidebarBalance').textContent = fmtMoney(getCurrentBalance());
+
+  // equity chart
+  let cum = 0;
+  const eqLabels = list.map(t=>t.fecha);
+  const eqData = list.map(t=>{ cum += calcPnl(t); return cum; });
+  if(chartEquity) chartEquity.destroy();
+  chartEquity = new Chart(document.getElementById('chartEquity'), {
+    type:'line',
+    data:{ labels:eqLabels, datasets:[{
+      label:'P&L acumulado', data:eqData, borderColor:'#7c5cff',
+      backgroundColor:'rgba(124,92,255,.12)', fill:true, tension:.3, pointRadius:0, borderWidth:2
+    }]},
+    options: chartOpts()
+  });
+
+  // win/loss donut
+  if(chartWinLoss) chartWinLoss.destroy();
+  chartWinLoss = new Chart(document.getElementById('chartWinLoss'), {
+    type:'doughnut',
+    data:{ labels:['Ganadoras','Perdedoras'], datasets:[{ data:[wins.length, losses.length], backgroundColor:['#1fd67a','#ff4d6a'], borderWidth:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{color:'#8890a4'}}} }
+  });
+
+  // recent trades
+  const accTrades = getAccountTrades(currentAccountId);
+  const recentBody = document.getElementById('recentTradesBody');
+  recentBody.innerHTML = '';
+  [...accTrades].sort((a,b)=> new Date(b.fecha)-new Date(a.fecha)).slice(0,6).forEach(t=>{
+    const pnl = calcPnl(t);
+    recentBody.innerHTML += `<tr>
+      <td>${t.fecha}</td><td>${t.simbolo}</td>
+      <td><span class="tag ${t.lado==='long'?'tag-long':'tag-short'}">${t.lado==='long'?'Long':'Short'}</span></td>
+      <td class="${pnlClass(pnl)}">${fmtMoney(pnl)}</td>
+    </tr>`;
+  });
+  if(!accTrades.length){ recentBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px;">Sin operaciones aún</td></tr>'; }
+
+  // daily pnl current month
+  const now = new Date();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  const dLabels = [], dData = [];
+  for(let d=1; d<=daysInMonth; d++){
+    const iso = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    dLabels.push(d);
+    dData.push(byDay[iso] || (accTrades.filter(t=>t.fecha===iso).reduce((a,t)=>a+calcPnl(t),0)) || 0);
+  }
+  if(chartDaily) chartDaily.destroy();
+  chartDaily = new Chart(document.getElementById('chartDaily'), {
+    type:'bar',
+    data:{ labels:dLabels, datasets:[{ data:dData, backgroundColor: dData.map(v=> v>=0 ? '#1fd67a':'#ff4d6a') }] },
+    options: chartOpts(true)
+  });
+}
+document.getElementById('dashRange').addEventListener('change', renderDashboard);
+
+function chartOpts(hideLegend){
+  return {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display: !hideLegend, labels:{color:'#8890a4'} } },
+    scales:{
+      x:{ ticks:{color:'#8890a4', maxRotation:0, autoSkip:true}, grid:{color:'#1e2230'} },
+      y:{ ticks:{color:'#8890a4'}, grid:{color:'#1e2230'} }
+    }
+  };
+}
+
+/* ---------------- RENDER: TRADES ---------------- */
+function renderTradesTable(){
+  const search = (document.getElementById('tradeSearch').value||'').toUpperCase();
+  const body = document.getElementById('tradesBody');
+  const list = [...getAccountTrades(currentAccountId)].sort((a,b)=> new Date(b.fecha)-new Date(a.fecha)).filter(t=> t.simbolo.includes(search));
+  body.innerHTML = '';
+  document.getElementById('tradesEmpty').style.display = list.length ? 'none' : 'block';
+  list.forEach(t=>{
+    const pnl = calcPnl(t);
+    const ret = t.entrada ? (((t.salida-t.entrada)/t.entrada)*100*(t.lado==='short'?-1:1)) : 0;
+    const acc = accounts.find(a=>a.id===t.cuentaId);
+    body.innerHTML += `<tr>
+      <td>${t.fecha}</td>
+      <td><b>${t.simbolo}</b></td>
+      <td><span class="tag ${t.lado==='long'?'tag-long':'tag-short'}">${t.lado==='long'?'Long':'Short'}</span></td>
+      <td>${acc ? acc.nombre : '—'}</td>
+      <td>${t.entrada}</td>
+      <td>${t.salida}</td>
+      <td>${t.tamano}</td>
+      <td>${fmtMoney(t.comision||0)}</td>
+      <td class="${pnlClass(pnl)}"><b>${fmtMoney(pnl)}</b></td>
+      <td class="${pnlClass(ret)}">${ret.toFixed(2)}%</td>
+      <td>
+        <button class="btn btn-sm" onclick="openTradeModal('${t.id}')">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteTrade('${t.id}')">Eliminar</button>
+      </td>
+    </tr>`;
+  });
+}
+document.getElementById('tradeSearch').addEventListener('input', renderTradesTable);
+
+function exportTrades(){
+  const list = getAccountTrades(currentAccountId);
+  if(!list.length){ alert('No hay operaciones para exportar'); return; }
+  const headers = ['fecha','simbolo','lado','cuenta','entrada','salida','tamano','comision','pnl','notas'];
+  const rows = list.map(t=>{
+    const acc = accounts.find(a=>a.id===t.cuentaId);
+    return [t.fecha,t.simbolo,t.lado,acc?acc.nombre:'',t.entrada,t.salida,t.tamano,t.comision,calcPnl(t),(t.notas||'').replace(/,/g,';')];
+  });
+  const csv = [headers.join(','), ...rows.map(r=>r.join(','))].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'trades.csv'; a.click();
+}
+
+/* ---------------- RENDER: CALENDAR ---------------- */
+let calDate = new Date();
+function calShift(n){ calDate.setMonth(calDate.getMonth()+n); renderCalendar(); }
+function renderCalendar(){
+  const y = calDate.getFullYear(), m = calDate.getMonth();
+  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  document.getElementById('calMonthLabel').textContent = monthNames[m]+' '+y;
+  const firstDay = new Date(y,m,1).getDay();
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  for(let i=0;i<firstDay;i++){ grid.innerHTML += '<div class="cal-day empty"></div>'; }
+  const accTrades = getAccountTrades(currentAccountId);
+  for(let d=1; d<=daysInMonth; d++){
+    const iso = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayTrades = accTrades.filter(t=>t.fecha===iso);
+    const pnl = dayTrades.reduce((a,t)=>a+calcPnl(t),0);
+    let cls = 'cal-day';
+    if(dayTrades.length) cls += pnl>=0 ? ' win' : ' loss';
+    grid.innerHTML += `<div class="${cls}" onclick="showDayDetail('${iso}')">
+      <div class="dn">${d}</div>
+      ${dayTrades.length ? `<div><div class="dp ${pnlClass(pnl)}">${fmtMoney(pnl)}</div><div class="dc">${dayTrades.length} op.</div></div>` : ''}
+    </div>`;
+  }
+}
+function showDayDetail(iso){
+  const dayTrades = getAccountTrades(currentAccountId).filter(t=>t.fecha===iso);
+  if(!dayTrades.length) return;
+  document.getElementById('dayModalTitle').textContent = 'Detalle · ' + iso;
+  const body = document.getElementById('dayModalBody');
+  body.innerHTML = dayTrades.map(t=>{
+    const pnl = calcPnl(t);
+    return `<tr><td>${t.simbolo}</td><td><span class="tag ${t.lado==='long'?'tag-long':'tag-short'}">${t.lado==='long'?'Long':'Short'}</span></td><td class="${pnlClass(pnl)}">${fmtMoney(pnl)}</td></tr>`;
+  }).join('');
+  document.getElementById('dayOverlay').classList.add('active');
+}
+function closeDayModal(){ document.getElementById('dayOverlay').classList.remove('active'); }
+
+/* ---------------- DATA MANAGEMENT ---------------- */
+function exportData(){
+  const data = { trades, accounts };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'trading-journal-backup.json'; a.click();
+}
+function importData(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    try{
+      const data = JSON.parse(ev.target.result);
+      trades = data.trades || []; accounts = data.accounts || [];
+      save(DB_KEYS.trades, trades); save(DB_KEYS.accounts, accounts);
+      currentAccountId = 'all'; save(DB_KEYS.currentAccount, currentAccountId);
+      renderAccountSwitcher();
+      renderAll();
+      alert('Datos importados correctamente');
+    }catch(err){ alert('Archivo inválido'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+function resetAllData(){
+  if(!confirm('Esto borrará todas tus operaciones y cuentas. ¿Continuar?')) return;
+  trades = []; accounts = [];
+  save(DB_KEYS.trades, trades); save(DB_KEYS.accounts, accounts);
+  currentAccountId = 'all'; save(DB_KEYS.currentAccount, currentAccountId);
+  renderAccountSwitcher();
+  renderAll();
+}
+
+/* ---------------- INIT ---------------- */
+function renderAll(){
+  renderDashboard();
+  renderTradesTable();
+  renderCalendar();
+  renderAccounts();
+}
+renderAccountSwitcher();
+renderAll();
+</script>
+</body>
+</html>
